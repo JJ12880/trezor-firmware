@@ -25,7 +25,7 @@ from ..common import get_test_address
 PIN4 = "1234"
 
 
-@pytest.mark.setup_client(passphrase=True)
+@pytest.mark.setup_client(passphrase="TREZOR")
 def test_wipe_device(client):
     assert client.features.initialized is True
     assert client.features.label == "test"
