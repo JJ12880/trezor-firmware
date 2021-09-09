@@ -4,6 +4,7 @@ use crate::error::Error;
 use crate::micropython::obj::Obj;
 
 use super::ffi;
+use super::runtime::except;
 
 pub struct IterBuf {
     iter_buf: ffi::mp_obj_iter_buf_t,
@@ -37,8 +38,8 @@ impl<'a> Iter<'a> {
         //    `Iter`.
         //  - Raises if `o` is not iterable and in other cases as well.
         //  - Returned obj is referencing into `iter_buf`.
-        // TODO: Use a fn that doesn't raise on non-iterable object.
-        let iter = unsafe { ffi::mp_getiter(o, &mut iter_buf.iter_buf) };
+        // EXCEPTION: Raises if `o` is not iterable.
+        let iter = except(|| unsafe { ffi::mp_getiter(o, &mut iter_buf.iter_buf) })?;
         Ok(Self {
             iter,
             iter_buf,
@@ -57,13 +58,15 @@ impl<'a> Iterator for Iter<'a> {
         // SAFETY:
         //  - We assume that `mp_iternext` returns objects without any lifetime
         //    invariants, i.e. heap-allocated, unlike `mp_getiter`.
-        //  - Can raise.
-        let item = unsafe { ffi::mp_iternext(self.iter) };
-        if item == Obj::const_stop_iteration() {
-            self.finished = true;
-            None
-        } else {
-            Some(item)
+        // EXCEPTION: Can raise from the underlying iterator.
+        let item = except(|| unsafe { ffi::mp_iternext(self.iter) });
+        match item {
+            Err(_) => None,
+            Ok(item) if item == Obj::const_stop_iteration() => {
+                self.finished = true;
+                None
+            }
+            Ok(item) => Some(item),
         }
     }
 }

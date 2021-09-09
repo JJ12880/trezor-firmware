@@ -1,43 +1,38 @@
 use core::convert::Infallible;
-use core::fmt;
-
 use cstr_core::CStr;
 
+use crate::micropython::{ffi, obj::Obj, qstr::Qstr};
+
+#[derive(Debug)]
 pub enum Error {
-    Missing,
+    TypeError,
     OutOfRange,
-    InvalidType,
-    NotBuffer,
-    NotInt,
-    InvalidOperation,
+    MissingKwargs,
+    CaughtException(Obj),
+    KeyError(Obj),
+    AttributeError(Qstr),
+    ValueError(&'static CStr),
 }
 
-impl Error {
-    pub fn as_cstr(&self) -> &'static CStr {
-        // SAFETY: Safe because we are passing in \0-terminated literals.
+impl From<Error> for Obj {
+    fn from(err: Error) -> Self {
         unsafe {
-            let cstr = |s: &'static str| CStr::from_bytes_with_nul_unchecked(s.as_bytes());
-            match self {
-                Error::Missing => cstr("Missing\0"),
-                Error::OutOfRange => cstr("OutOfRange\0"),
-                Error::InvalidType => cstr("InvalidType\0"),
-                Error::NotBuffer => cstr("NotBuffer\0"),
-                Error::NotInt => cstr("NotInt\0"),
-                Error::InvalidOperation => cstr("InvalidOperation\0"),
+            match err {
+                Error::TypeError => ffi::mp_obj_new_exception(&ffi::mp_type_TypeError),
+                Error::OutOfRange => ffi::mp_obj_new_exception(&ffi::mp_type_OverflowError),
+                Error::MissingKwargs => ffi::mp_obj_new_exception(&ffi::mp_type_TypeError),
+                Error::CaughtException(obj) => obj,
+                Error::KeyError(key) => {
+                    ffi::mp_obj_new_exception_arg1(&ffi::mp_type_KeyError, key.into())
+                }
+                Error::ValueError(msg) => {
+                    ffi::mp_obj_new_exception_msg(&ffi::mp_type_ValueError, msg.as_ptr())
+                }
+                Error::AttributeError(attr) => {
+                    ffi::mp_obj_new_exception_arg1(&ffi::mp_type_AttributeError, attr.into())
+                }
             }
         }
-    }
-}
-
-impl From<Error> for &'static CStr {
-    fn from(val: Error) -> Self {
-        val.as_cstr()
-    }
-}
-
-impl fmt::Debug for Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.as_cstr().fmt(f)
     }
 }
 

@@ -77,7 +77,7 @@ fn generate_micropython_bindings() {
         .allowlist_var("mp_type_fun_builtin_2")
         .allowlist_var("mp_type_fun_builtin_3")
         // gc
-        .allowlist_function("gc_alloc")
+        .allowlist_function("m_malloc")
         // iter
         .allowlist_type("mp_obj_iter_buf_t")
         .allowlist_function("mp_getiter")
@@ -93,9 +93,17 @@ fn generate_micropython_bindings() {
         .allowlist_function("mp_map_init")
         .allowlist_function("mp_map_init_fixed_table")
         .allowlist_function("mp_map_lookup")
-        // runtime
-        .allowlist_function("mp_raise_ValueError")
+        // exceptions
+        .allowlist_function("nlr_jump")
+        .allowlist_function("mp_obj_new_exception")
+        .allowlist_function("mp_obj_new_exception_msg")
+        .allowlist_function("mp_obj_new_exception_arg1")
         .allowlist_function("trezor_obj_call_protected")
+        .allowlist_var("mp_type_AttributeError")
+        .allowlist_var("mp_type_KeyError")
+        .allowlist_var("mp_type_OverflowError")
+        .allowlist_var("mp_type_ValueError")
+        .allowlist_var("mp_type_TypeError")
         // typ
         .allowlist_var("mp_type_type");
 

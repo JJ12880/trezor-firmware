@@ -15,7 +15,8 @@ use crate::{
 
 use super::{
     defs::{FieldDef, FieldType, MsgDef},
-    obj::{MsgObj},
+    error,
+    obj::MsgObj,
     zigzag,
 };
 
@@ -220,7 +221,7 @@ impl<'a> OutputStream for BufferStream<'a> {
                 *pos += len;
                 buf.copy_from_slice(val);
             })
-            .ok_or(Error::Missing)
+            .ok_or(error::end_of_buffer())
     }
 
     fn write_byte(&mut self, val: u8) -> Result<(), Error> {
@@ -231,6 +232,6 @@ impl<'a> OutputStream for BufferStream<'a> {
                 *pos += 1;
                 *buf = val;
             })
-            .ok_or(Error::Missing)
+            .ok_or(error::end_of_buffer())
     }
 }

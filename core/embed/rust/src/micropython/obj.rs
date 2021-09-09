@@ -139,7 +139,7 @@ impl TryFrom<Obj> for i32 {
             let int = int.try_into()?;
             Ok(int)
         } else {
-            Err(Error::NotInt)
+            Err(Error::TypeError)
         }
     }
 }
@@ -153,7 +153,7 @@ impl TryFrom<Obj> for i64 {
         if unsafe { ffi::trezor_obj_get_ll_checked(obj, &mut ll) } {
             Ok(ll)
         } else {
-            Err(Error::NotInt)
+            Err(Error::TypeError)
         }
     }
 }
